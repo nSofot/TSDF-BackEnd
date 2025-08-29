@@ -9,13 +9,13 @@ export async function CreateCustomer(req, res) {
     //     });
     // }
 
-    let customerId = "CUS-0001";
+    let customerId = "001";
 
     try {
         const lastCustomer = await Customer.find().sort({ createdAt: -1 }).limit(1);
         if (lastCustomer.length > 0) {
-            const lastId = parseInt(lastCustomer[0].customerId.replace("CUS-", ""));
-            customerId = "CUS-" + String(lastId + 1).padStart(4, "0");
+            const lastId = parseInt(lastCustomer[0].customerId.replace("",""));
+            customerId = String(lastId + 1).padStart(3, "0");
         }
     } catch (err) {
         return res.status(500).json({ message: "Failed to fetch last customer", error: err.message });
