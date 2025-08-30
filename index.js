@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 // Route Imports
 import userRouter from "./Routes/userRouter.js";
 import customerRouter from "./Routes/customerRouter.js";
-import customerTransactionsRouter from "./Routes/customerTransactionsRoutes.js";
+import loanTransactionsRouter from "./Routes/loanTransactionsRoutes.js";
 import ledgerAccountRouter from "./Routes/ledgerAccountRoutes.js";
 import ledgerTransactionsRouter from "./Routes/ledgerTransactionsRoutes.js";
 import loanMasterRouter from "./Routes/loanMasterRoutes.js";
@@ -48,7 +48,7 @@ mongoose.connect(process.env.MONGODB_URL)
 // Routes
 app.use("/api/user", userRouter);
 app.use("/api/customer", customerRouter);
-app.use("/api/customerTransactions", customerTransactionsRouter);
+app.use("/api/loanTransactions", loanTransactionsRouter);
 app.use("/api/ledgerAccounts", ledgerAccountRouter);
 app.use("/api/ledgerTransactions", ledgerTransactionsRouter);
 app.use("/api/loanMaster", loanMasterRouter);

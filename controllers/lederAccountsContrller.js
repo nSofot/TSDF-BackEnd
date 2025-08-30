@@ -9,9 +9,9 @@ export async function createLedgerAccount(req, res) {
 
     try {
         // 1️⃣ Admin check
-        if (!(await isAdmin(req))) {
-            return res.status(403).json({ message: "You are not authorized to add ledger account" });
-        }
+        // if (!(await isAdmin(req))) {
+        //     return res.status(403).json({ message: "You are not authorized to add ledger account" });
+        // }
 
         // 2️⃣ Required field check
         if (!req.body.accountName) {

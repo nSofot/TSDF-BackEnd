@@ -41,15 +41,15 @@ export async function CreateCustomer(req, res) {
 
 export async function getCustomer(req,res) {
 
-    try{
-        if(isAdmin(req)){
+    try {
+    //     if(isAdmin(req)){
             const customers = await Customer.find()
             res.json(customers)
-        }
-        else{
-            const customers = await Customer.find({isActive : true})
-            res.json(customers)
-        }
+        // }
+        // else{
+        //     const customers = await Customer.find({isActive : true})
+        //     res.json(customers)
+        // }
 
     }
     catch(err){

@@ -70,6 +70,41 @@ export async function getPendingLoansByCustomerId(req, res) {
         res.status(500).json({ message: "Failed to fetch loan master", error: err.message });
     }   
 }   
+
+
+export async function getPendingLoansByGuarantorId(req, res) {
+    const { customerId } = req.params;
+    try {
+        const loanMaster = await LoanMaster.find({
+            $or: [
+                { firstGaranterId: customerId },
+                { secondGaranterId: customerId }
+            ],
+            loanDueAmount: { $gt: 0 }
+        });
+
+        if (!loanMaster || loanMaster.length === 0) {
+            return res.status(404).json({ message: "No pending loans found for this guarantor" });
+        }
+
+        res.json(loanMaster);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch loans by guarantor", error: err.message });
+    }
+}
+
+export async function getPendingLoansForGrant(req, res) {
+    try {
+        const loanMaster = await LoanMaster.find({ isGranted: false });
+        if (!loanMaster) {
+            return res.status(404).json({ message: "Loan master not found" });
+        }
+        res.json(loanMaster);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch loan master", error: err.message });
+    }
+}
+
   
 export async function updateLoanMaster(req, res) {
     // if (!isAdmin(req)) return res.status(403).json({ message: "Unauthorized access" });

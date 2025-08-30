@@ -42,6 +42,14 @@ const loanMasterSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    isApproved: {
+        type: Boolean,
+        default: false
+    },
+    isGranted: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now
