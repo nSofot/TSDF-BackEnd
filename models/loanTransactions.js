@@ -6,6 +6,15 @@ const loanTransactionsSchema = new mongoose.Schema({
         required: true,
         unique: true            
     },
+    trxBookNo: {
+        type: String,
+        required: true,
+        unique: false
+    },
+    loanId: {
+        type: String,
+        required: true,
+    },
     customerId: {
         type: String,
         required: true,
@@ -19,7 +28,17 @@ const loanTransactionsSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-    amount: {
+    interest: {
+        type: Number,
+        default: 0,
+        min: [0, 'Interest must be positive']
+    },
+    installment: {
+        type: Number,
+        default: 0,
+        min: [0, 'Installment must be positive']
+    },
+    totalAmount: {
         type: Number,
         required: true,
         min: [0, 'Amount must be positive']

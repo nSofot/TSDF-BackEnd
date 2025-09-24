@@ -30,58 +30,47 @@ export async function getLedgerTransactionById(req, res) {
 }
 
 
-    export async function createLedgerTransaction(req, res) {      
-        try {
-            const admin = await isAdmin(req);
-            if (!admin) {
-                return res.status(403).json({ message: "Unauthorized access" });
-            }
+export async function createLedgerTransaction(req, res) {             
+    try {
+        const { trxId, trxBookNo, accountId, trxDate, description, transactionType, isCredit, trxAmount } = req.body;
 
-            const { trxId, accountId, trxDate, description, transactionType, trxType, trxAmount } = req.body;
+        if (!trxId || !accountId || !trxDate || !description || isCredit == null || trxAmount == null) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
 
-            if (!trxId || !accountId || !trxDate || !description || !trxType || trxAmount == null) {
-                return res.status(400).json({ message: "Missing required fields" });
-            }
+        const trxDateObj = new Date(trxDate);
+        if (isNaN(trxDateObj)) {
+            return res.status(400).json({ message: "Invalid transaction date" });
+        }
 
-            // Convert trxDate string to Date object if necessary
-            const trxDateObj = new Date(trxDate);
-            if (isNaN(trxDateObj)) {
-                return res.status(400).json({ message: "Invalid transaction date" });
-            }
+        const accountTransaction = new LedgerTransactions({
+            trxId,
+            trxBookNo,
+            accountId,
+            trxDate: trxDateObj,
+            transactionType,
+            description,
+            isCredit,
+            trxAmount,
+            createdBy: req.user?.id || "system",
+        });
 
-            // Check for duplicate trxId
-            // const existing = await AccountTransactions.findOne({ trxId });
-            // if (existing) {
-            //     return res.status(409).json({ message: "Transaction ID already exists" });
-            // }
 
-            const accountTransaction = new LedgerTransactions({
-                trxId,
-                accountId,
-                trxDate: trxDateObj,
-                transactionType,
-                accountId,
-                description,
-                trxType,
-                trxAmount,
-                createdBy: req.user?.id || "system", // add user id if available
-            });
+        await accountTransaction.save();
 
-            await accountTransaction.save();
-
-            res.status(201).json({
+        res.status(201).json({
             message: "Account transaction created",
             transaction: accountTransaction,
-            });
-        } catch (err) {
-            console.error("Error creating account transaction:", err);
-            res.status(500).json({
+        });
+    } catch (err) {
+        console.error("Error creating account transaction:", err);
+        res.status(500).json({
             message: "Failed to create account transaction",
             error: err.message,
-            });
-        }
+        });
     }
- 
+}
+
 
 export async function updateLedgerTransaction(req, res) {
     if (!isAdmin(req)) return res.status(403).json({ message: "Unauthorized access" });

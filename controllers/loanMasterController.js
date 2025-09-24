@@ -4,14 +4,13 @@ import { isAdmin } from "./userController.js";
 
 export async function createLoanMaster(req, res) {
     // if (!isAdmin(req)) return res.status(403).json({ message: "Unauthorized access" });
-
     
     try {
-        let loanId = "VCHR-000001";
+        let loanId = "LAPC-000001";
         const lastLoan = await LoanMaster.find().sort({ createdAt: -1 }).limit(1);
         if (lastLoan.length > 0) {
-            const lastId = parseInt(lastLoan[0].loanId.replace("VCHR-", ""));
-            loanId = "VCHR-" + String(lastId + 1).padStart(6, "0");
+            const lastId = parseInt(lastLoan[0].loanId.replace("LAPC-", ""));
+            loanId = "LAPC-" + String(lastId + 1).padStart(6, "0");
         }
 
         req.body.loanId = loanId;
@@ -23,16 +22,8 @@ export async function createLoanMaster(req, res) {
     }
 }
 
-export async function getLoanMasters(req, res) {
-    try {
-        const loanMasters = await LoanMaster.find();
-        res.json(loanMasters);
-    } catch (err) {
-        res.status(500).json({ message: "Failed to fetch loan masters", error: err.message });
-    }
-}
 
-export async function getLoanMasterById(req, res) {
+export async function getLoanMasterByLoanId(req, res) {
     const { loanId } = req.params;
     try {
         const loanMaster = await LoanMaster.findOne({ loanId });
@@ -45,7 +36,7 @@ export async function getLoanMasterById(req, res) {
     }
 }
 
-export async function getLoanMasterByCustomerId(req, res) {
+export async function getLoansMasterByCustomerId(req, res) {   
     const { customerId } = req.params;
     try {
         const loanMaster = await LoanMaster.find({ customerId });
@@ -58,10 +49,30 @@ export async function getLoanMasterByCustomerId(req, res) {
     }   
 }
 
-export async function getPendingLoansByCustomerId(req, res) {
-    const { customerId } = req.params;
+export async function getAllPendingLoans(req, res) {
     try {
-        const loanMaster = await LoanMaster.find({ customerId, loanDueAmount: { $gt: 0 } });
+        const loanMaster = await LoanMaster.find(
+            { 
+                isGranted: true,
+                dueAmount: { $gt: 0 }
+            });
+        if (!loanMaster) {
+            return res.status(404).json({ message: "Loan master not found" });
+        }
+        res.json(loanMaster);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch loan master", error: err.message });
+    }
+}
+
+export async function getPendingLoansByCustomerId(req, res) {   
+    const { customerId } = req.params;  
+    try {
+        const loanMaster = await LoanMaster.find({
+            customerId,
+            isGranted: true,
+            dueAmount: { $gt: 0 }
+        });
         if (!loanMaster) {
             return res.status(404).json({ message: "Loan master not found" });
         }
@@ -71,7 +82,6 @@ export async function getPendingLoansByCustomerId(req, res) {
     }   
 }   
 
-
 export async function getPendingLoansByGuarantorId(req, res) {
     const { customerId } = req.params;
     try {
@@ -80,6 +90,7 @@ export async function getPendingLoansByGuarantorId(req, res) {
                 { firstGaranterId: customerId },
                 { secondGaranterId: customerId }
             ],
+            isGranted: true,
             loanDueAmount: { $gt: 0 }
         });
 
@@ -93,9 +104,97 @@ export async function getPendingLoansByGuarantorId(req, res) {
     }
 }
 
+
+export async function getLoanPendingApprovalBycustomerId(req, res) {
+    const { customerId } = req.params;
+    try {
+        const loanMaster = await LoanMaster.findOne(
+            { 
+                customerId, 
+                isRejected: false,
+                isApproved: false, 
+                isGranted: false 
+            });
+        if (!loanMaster) {
+            return res.status(404).json({ message: "Applicant has no pending loan application" });
+        }
+        res.json(loanMaster);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch loan master", error: err.message });
+    }
+    
+}
+
+
+export async function getLoanPendingApplicationBycustomerId(req, res) {
+    const { customerId } = req.params;  
+    try {
+        const loanMaster = await LoanMaster.findOne({
+            customerId,
+            isGranted: false
+        });
+
+
+        if (!loanMaster) {
+            return res.status(404).json({
+                message: "Applicant has no pending loan application"
+            });
+        }
+
+        res.json(loanMaster);
+    } catch (err) {
+        res.status(500).json({
+            message: "Failed to fetch loan master",
+            error: err.message
+        });
+    }
+}
+
+
+export async function getLoanPendingGrantBycustomerId(req, res) {
+    const { customerId } = req.params;
+    try {
+        const loanMaster = await LoanMaster.findOne(
+            { 
+                customerId, 
+                isRejected: false,
+                isApproved: true, 
+                isGranted: false 
+            });
+        if (!loanMaster) {
+            return res.status(404).json({ message: "Applicant has no pending loan application" });
+        }
+        res.json(loanMaster);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch loan master", error: err.message });
+    }
+}
+
+export async function getPendingLoansForApprovals(req, res) {
+    try {
+        const loanMaster = await LoanMaster.find({
+            isApproved: false,
+            isRejected: false,
+            isGranted: false
+        });
+
+        if (!loanMaster) {
+            return res.status(404).json({ message: "Loan master not found" });
+        }
+        res.json(loanMaster);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch loan master", error: err.message });
+    }
+}
+
+
 export async function getPendingLoansForGrant(req, res) {
     try {
-        const loanMaster = await LoanMaster.find({ isGranted: false });
+        const loanMaster = await LoanMaster.find(
+            { 
+                isApproved: true,  
+                isGranted: false 
+            });
         if (!loanMaster) {
             return res.status(404).json({ message: "Loan master not found" });
         }
@@ -107,16 +206,35 @@ export async function getPendingLoansForGrant(req, res) {
 
   
 export async function updateLoanMaster(req, res) {
-    // if (!isAdmin(req)) return res.status(403).json({ message: "Unauthorized access" });
+  const { loanId } = req.params;
+  try {
+    const loanMaster = await LoanMaster.findOneAndUpdate(
+      { loanId },   // <-- search by loanId field
+      req.body,
+      { new: true }
+    );
 
-    const { loanId } = req.params;
+    if (!loanMaster) {
+      return res.status(404).json({ message: "Loan master not found" });
+    }
+    res.json(loanMaster);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update loan master", error: err.message });
+  }
+}
+
+
+export async function deleteLoanMaster(req, res) {
+    const { loanId } = req.params;  
     try {
-        const loanMaster = await LoanMaster.findOneAndUpdate({ loanId }, req.body, { new: true });
+        const loanMaster = await LoanMaster.findOneAndDelete({ 
+            loanId, isGranted: false 
+        });
         if (!loanMaster) {
             return res.status(404).json({ message: "Loan master not found" });
         }
         res.json(loanMaster);
     } catch (err) {
-        res.status(500).json({ message: "Failed to update loan master", error: err.message });
+        res.status(500).json({ message: "Failed to delete loan master", error: err.message });
     }
 }

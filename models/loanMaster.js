@@ -1,4 +1,4 @@
-import e from "cors";
+import { application } from "express";
 import mongoose from "mongoose";
 
 const loanMasterSchema = new mongoose.Schema({
@@ -11,15 +11,13 @@ const loanMasterSchema = new mongoose.Schema({
         type: String,
         required: true 
     },
-    firstGaranterId: {
+    firstGuarantorId: {
         type: String,
+        default: ""
     },
-    SecondGaranterId: {
+    secondGuarantorId: {
         type: String,
-    },
-    issuedDate: {
-        type: Date,
-        required: true
+        default: ""
     },
     loanType: {
         type: String,
@@ -42,7 +40,31 @@ const loanMasterSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    isApprovedChairman: {
+        type: Boolean,
+        default: false
+    },
+    isApprovedSecretary: {
+        type: Boolean,
+        default: false
+    },
+    isApprovedTreasurer: {
+        type: Boolean,
+        default: false
+    },
+    isApprovedExecute: {
+        type: Boolean,
+        default: false
+    },
+    isApprovedManager: {
+        type: Boolean,
+        default: false
+    },
     isApproved: {
+        type: Boolean,
+        default: false
+    },
+    isRejected: {
         type: Boolean,
         default: false
     },
@@ -50,7 +72,27 @@ const loanMasterSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    voucherNumber: {
+        type: String,
+        default: ""
+    },
+    applicationDate: {
+        type: Date,
+        required: true
+    },
+    approvalDate: {
+        type: Date,
+        default: null
+    },
+    issuedDate: {
+        type: Date,
+        default: null
+    },    
     createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
         type: Date,
         default: Date.now
     }
