@@ -6,11 +6,12 @@ const customerSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    // customerType: {
-    //     type: String,
-    //     required: true,
-    //     enum: ['shareholder', 'external']
-    // },
+    customerType: {
+        type: String,
+        required: true,
+        default: 'shareholder',
+        enum: ['shareholder', 'external']
+    },
     title: {
         type: String,
         enum: ['Mr.', 'Mrs.', 'Ms.']
@@ -36,27 +37,22 @@ const customerSchema = new mongoose.Schema({
     image: [
         {type: String}
     ],
+    joinDate: {
+        type: Date
+    },
     shares: {
         type: Number,
         default: 0
     },
-    loanDaily: {
+    profits: {
         type: Number,
         default: 0
     },
-    loanWelfare: {
+    membership: {
         type: Number,
         default: 0
     },
-    loanShortTerm: {
-        type: Number,
-        default: 0
-    },
-    loanLongTerm: {
-        type: Number,
-        default: 0
-    },
-    loanProject: {
+    holdAmount: {
         type: Number,
         default: 0
     },
@@ -65,6 +61,19 @@ const customerSchema = new mongoose.Schema({
     },
     notes: {
         type: String
+    },
+    memberRole: {
+        type: String,
+        enum: ['member', 'manager', 'chairman', 'secretary', 'treasurer', 'admin'],
+        default: 'member'
+    },
+    password: {
+        type: String
+    },
+    isDeleted: {
+        type: Boolean,
+        required: true,
+        default: false
     },
     isActive: {
         type: Boolean,
