@@ -1,10 +1,11 @@
 import express from "express";
-import { getLedgerTransactions } from "../controllers/ledgerTransactionsController.js";
-import { createLedgerTransaction } from "../controllers/ledgerTransactionsController.js";
-import { updateLedgerTransaction } from "../controllers/ledgerTransactionsController.js";
-import { deleteLedgerTransaction } from "../controllers/ledgerTransactionsController.js";
-import { getLedgerTransactionById } from "../controllers/ledgerTransactionsController.js";
 
+import { 
+    createLedgerTransaction,
+    updateLedgerTransaction, 
+    deleteLedgerTransaction,
+    getLedgerTransactionById
+} from "../controllers/ledgerTransactionsController.js";
 
 const ledgerTransactionsRouter = express.Router();
 

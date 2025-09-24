@@ -1,19 +1,13 @@
 import { isAdmin } from "./userController.js";
-import CustomerTransactions from "../models/customerTransactions.js";
+import LoanTransactions from "../models/loanTransactions.js";
 
-export async function addCustomerTransaction(req, res) {
+export async function addLoanTransaction(req, res) {
     try {
-        if (!(await isAdmin(req))) {
-            return res.status(403).json({ message: "You are not authorized to add a transaction" });
-        }
-
         const { transactionType } = req.body;
 
         const prefixMap = {
-            invoice: "INVC-C-",
-            receipt: "RCPT-C-",
-            credit_note: "CRDN-C-",
-            debit_note: "DBTN-C-"
+            voucher: "VOUC-",
+            receipt: "RCPT-",
         };
 
         const prefix = prefixMap[transactionType];
@@ -21,37 +15,41 @@ export async function addCustomerTransaction(req, res) {
             return res.status(400).json({ message: "Invalid transaction type" });
         }
 
-        let referenceNumber = prefix + "000001";
-        const lastTransaction = await CustomerTransactions
+        // 🔹 Generate trxNumber
+        let trxNumber = prefix + "000001";
+        const lastTransaction = await LoanTransactions
             .findOne({ transactionType })
             .sort({ createdAt: -1 });
 
         if (lastTransaction) {
-            const match = lastTransaction.referenceNumber?.match(new RegExp(`^${prefix}(\\d{6})$`));
+            const match = lastTransaction.trxNumber?.match(
+                new RegExp(`^${prefix}(\\d{6})$`)
+            );
             if (match) {
                 const lastId = parseInt(match[1], 10);
-                referenceNumber = prefix + String(lastId + 1).padStart(6, "0");
+                trxNumber = prefix + String(lastId + 1).padStart(6, "0");
             }
         }
 
-        req.body.referenceNumber = referenceNumber;
+        req.body.trxNumber = trxNumber;
 
-        const customerTransaction = new CustomerTransactions(req.body);
-        await customerTransaction.save();
+        // 🔹 Save new loan transaction
+        const LoanTransaction = new LoanTransactions(req.body);
+        await LoanTransaction.save();
 
-        res.status(201).json({
-            message: "Customer transaction created successfully",
-            transaction: customerTransaction // ✅ Corrected
+        return res.status(201).json({
+            message: "Loan transaction created successfully",
+            transaction: LoanTransaction,
         });
+
     } catch (err) {
-        console.error("❌ Error creating customer transaction:", err);
-        res.status(500).json({
-            message: "Failed to create customer transaction",
-            error: err.message
+        console.error("❌ Error creating loan transaction:", err);
+        return res.status(500).json({
+            message: "Failed to create loan transaction",
+            error: err.message,
         });
     }
 }
-
 
 
 export async function getLatestCustomerTransaction(req, res) {
@@ -129,19 +127,50 @@ export async function getCustomerTransactionByCustomerId(req, res) {
     }
 }
 
-export async function getCustomerPendingTransactionByCustomerId(req, res) {
-    const { customerId } = req.params;
+// export async function getCustomerPendingTransactionByCustomerId(req, res) {
+//     const { customerId } = req.params;
+
+//     try {
+//         const transactions = await CustomerTransactions.find({
+//             customerId,
+//             isCredit: false,
+//             dueAmount: { $gt: 0 }
+//         });
+
+//         res.json(transactions);
+//     } catch (err) {
+//         console.error("Error fetching pending transactions:", err);
+//         res.status(500).json({ message: "Server error while fetching pending transactions" });
+//     }
+// }
+
+
+export async function getTransactionsByTrxBookNo(req, res) {
+    const { trxBookNo, transactionType } = req.params;
 
     try {
-        const transactions = await CustomerTransactions.find({
-            customerId,
-            isCredit: false,
-            dueAmount: { $gt: 0 }
-        });
-
+        const transactions = await LoanTransactions.find({ trxBookNo, transactionType });
         res.json(transactions);
     } catch (err) {
-        console.error("Error fetching pending transactions:", err);
-        res.status(500).json({ message: "Server error while fetching pending transactions" });
+        res.status(500).json({ message: "Server error while fetching transactions" });
+    }
+}
+
+
+export async function getLastTransactionByCustomerId(req, res) {
+    const { customerId, loanId, transactionType } = req.params;
+    try {
+        const lastTransaction = await LoanTransactions
+            .findOne(
+                { 
+                    customerId,
+                    loanId,
+                    transactionType
+                })
+            .sort({ createdAt: -1 });
+
+        res.json(lastTransaction);
+    } catch (err) {
+        res.status(500).json({ message: "Server error while fetching last transaction" });
     }
 }

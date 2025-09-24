@@ -1,7 +1,12 @@
 import mongoose from "mongoose";
 
-const accountTransactionsSchema = new mongoose.Schema({
+const ledgerTransactionsSchema = new mongoose.Schema({
     trxId: {
+        type: String,
+        required: true,
+        unique: false
+    },
+    trxBookNo: {
         type: String,
         required: true,
         unique: false
@@ -13,7 +18,7 @@ const accountTransactionsSchema = new mongoose.Schema({
     transactionType: {
         type: String,
         required: true,
-        enum: ['invoice', 'receipt'],
+        enum: ['voucher', 'receipt'],
     },
     accountId: {
         type: String,
@@ -23,9 +28,8 @@ const accountTransactionsSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    trxType: {
-        type: String,
-        enum: ["Debit", "Credit"],  // optional: restrict transaction types
+    isCredit: {
+        type: Boolean,
         required: true
     },
     trxAmount: {
@@ -42,6 +46,6 @@ const accountTransactionsSchema = new mongoose.Schema({
     }
 });
 
-const AccountTransactions = mongoose.model("AccountTransactions", accountTransactionsSchema);
+const LedgerTransactions = mongoose.model("LedgerTransactions", ledgerTransactionsSchema);
 
-export default AccountTransactions;
+export default LedgerTransactions;
