@@ -3,7 +3,7 @@ import {
         addLoanTransaction,
         getLatestCustomerTransaction,
         getCustomerTransactionByCustomerId,
-        // getCustomerPendingTransactionByCustomerId,
+        getTransactionByLoanId,
         getLastTransactionByCustomerId,
         updateOverdueTransactions,
         getTransactionsByTrxBookNo
@@ -13,11 +13,9 @@ const loanTransactionsRouter = express.Router();
 
 // loanTransactionsRouter.get("/pending/:customerId", getCustomerPendingTransactionByCustomerId);
 loanTransactionsRouter.get("/customer/:customerId", getCustomerTransactionByCustomerId);
-loanTransactionsRouter.get(
-  "/last-trx/:customerId/:loanId/:transactionType",
-  getLastTransactionByCustomerId
-);
+loanTransactionsRouter.get("/last-trx/:customerId/:loanId/:transactionType",getLastTransactionByCustomerId);
 loanTransactionsRouter.get("/latest/:transactionType", getLatestCustomerTransaction);
+loanTransactionsRouter.get("/transactions/:loanId", getTransactionByLoanId);
 loanTransactionsRouter.post("/", addLoanTransaction);
 loanTransactionsRouter.put("/overdue/:referenceNumber/pay", updateOverdueTransactions);
 loanTransactionsRouter.get("/trxbook/:trxBookNo/:transactionType", getTransactionsByTrxBookNo);
