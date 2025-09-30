@@ -20,6 +20,20 @@ const customerSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    nameSinhala: {
+        type: String
+    },
+    familyMembers: [
+        {
+            name: {
+                type: String
+            },
+            relationship: {
+                type: String,
+                enum: ['mother', 'father', 'son', 'daughter', 'wife', 'husband', 'other']
+            }
+        }
+    ],
     address: {
         type: String,
         required: true
@@ -32,7 +46,8 @@ const customerSchema = new mongoose.Schema({
         type: String,
     },
     email: {
-        type: String
+        type: String, 
+        unique: true 
     },
     image: [
         {type: String}

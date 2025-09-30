@@ -127,23 +127,6 @@ export async function getCustomerTransactionByCustomerId(req, res) {
     }
 }
 
-// export async function getCustomerPendingTransactionByCustomerId(req, res) {
-//     const { customerId } = req.params;
-
-//     try {
-//         const transactions = await CustomerTransactions.find({
-//             customerId,
-//             isCredit: false,
-//             dueAmount: { $gt: 0 }
-//         });
-
-//         res.json(transactions);
-//     } catch (err) {
-//         console.error("Error fetching pending transactions:", err);
-//         res.status(500).json({ message: "Server error while fetching pending transactions" });
-//     }
-// }
-
 
 export async function getTransactionsByTrxBookNo(req, res) {
     const { trxBookNo, transactionType } = req.params;
@@ -172,5 +155,15 @@ export async function getLastTransactionByCustomerId(req, res) {
         res.json(lastTransaction);
     } catch (err) {
         res.status(500).json({ message: "Server error while fetching last transaction" });
+    }
+}
+
+export async function getTransactionByLoanId(req, res) {
+    const { loanId } = req.params;
+    try {
+        const transactions = await LoanTransactions.find({ loanId });
+        res.json(transactions);
+    } catch (err) {
+        res.status(500).json({ message: "Server error while fetching transactions" });
     }
 }
