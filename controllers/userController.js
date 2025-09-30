@@ -1,4 +1,4 @@
-import User from "../models/user.js";
+import User from "../models/customer.js";
 import OTP from "../models/otp.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -10,8 +10,27 @@ dotenv.config();
 
 // Utility: Check if user is admin
 export function isAdmin(req) {
-  return req.user && req.user.role === "Admin";
+  return req.user && req.user.memberRole === "admin";
 }
+
+
+export function getUserRole(req) {
+  const allowedRoles = [
+    "member",
+    "manager",
+    "chairman",
+    "secretary",
+    "treasurer",
+    "admin",
+  ];
+
+  if (req.user && allowedRoles.includes(req.user.memberRole)) {
+    return req.user.memberRole;
+  }
+
+  return null; // or "guest" if you want a default
+}
+
 
 // Utility: Generate next User ID
 async function generateUserId() {
@@ -26,9 +45,9 @@ async function generateUserId() {
 // ✅ Create User
 export async function createUser(req, res) {
   try {
-    const { email, firstname, lastname, mobile, password, role, isActive, image, dateOfBirth } = req.body;
+    const { name, nameSinhala, mobile, email, password, memberRole, isActive, image } = req.body;
 
-    if (role === "Admin" && (!req.user || req.user.role !== "Admin")) {
+    if (role === "admin" && (!req.user || req.user.role !== "admin")) {
       return res.status(403).json({ message: "Only admins can create another admin user." });
     }
 
@@ -41,15 +60,14 @@ export async function createUser(req, res) {
 
     const user = new User({
       userId: newUserId,
-      email,
-      firstname,
-      lastname,
+      name,
+      nameSinhala,
       mobile,
+      email,
       password: hashedPassword,
-      role,
+      memberRole,
       isActive,
       image,
-      dateOfBirth
     });
 
     await user.save();
@@ -61,30 +79,47 @@ export async function createUser(req, res) {
 
 // ✅ Login User
 export async function loginUsers(req, res) {
-  const { email, password } = req.body;
+  const { userId, email, password } = req.body;
+
+  if (!password || (!userId && !email)) {
+    return res.status(400).json({ message: "User ID or Email and password are required" });
+  }
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      $or: [{ customerId: userId }, { email }],
+    });
+
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const valid = bcrypt.compareSync(process.env.JWT_KEY + password, user.password);
     if (!valid) return res.status(401).json({ message: "Invalid password" });
 
-    const token = jwt.sign({
-      userId: user.userId,
-      email: user.email,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      role: user.role,
-      image: user.image,
-      dateOfBirth: user.dateOfBirth
-    }, process.env.JWT_KEY, { expiresIn: "1d" });
+    const token = jwt.sign(
+      {
+        userId: user.customerId,  
+        email: user.email,
+        nameSinhala: user.nameSinhala,
+        nameEnglish: user.name,
+        memberRole: user.memberRole
+      },
+      process.env.JWT_KEY,
+      { expiresIn: "1d" }
+    );
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", 
+      token, 
+      memberRole: user.memberRole, 
+      userId: user.customerId,
+      nameSinhala: user.nameSinhala,
+      nameEnglish: user.name,
+     });
   } catch (err) {
+    console.error("Login error:", err); // important for debugging
     res.status(500).json({ message: "Login failed", error: err.message });
   }
 }
+
 
 // ✅ Delete User
 export async function deleteUser(req, res) {
@@ -104,8 +139,8 @@ export async function updateUser(req, res) {
   if (!isAdmin(req)) return res.status(403).json({ message: "Unauthorized access" });
 
   try {
-    const { userId } = req.params;
-    const result = await User.updateOne({ userId }, req.body);
+    const { customerId } = req.params;
+    const result = await User.updateOne({ customerId }, req.body);
     if (result.matchedCount === 0) return res.status(404).json({ message: "User not found" });
     res.json({ message: "User updated successfully" });
   } catch (err) {
@@ -129,8 +164,8 @@ export async function getUsers(req, res) {
 export function getUser(req, res) {
   if (!req.user) return res.status(403).json({ message: "Unauthorized" });
 
-  const { userId, email, firstname, lastname, role, image, dateOfBirth } = req.user;
-  res.json({ userId, email, firstname, lastname, role, image, dateOfBirth });
+  const { customerId, email, nameSinhala, name, memberRole } = req.user;
+  res.json({ customerId, email, nameSinhala, name, memberRole});
 }
 
 // ✅ Google Login
@@ -143,7 +178,7 @@ export async function loginWithGoogle(req, res) {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { email, given_name, family_name, picture } = response.data;
+    const { email, userId, nameEnglish, nameSinhala, role } = response.data;
     let user = await User.findOne({ email });
 
     if (!user) {
@@ -151,25 +186,23 @@ export async function loginWithGoogle(req, res) {
       user = new User({
         userId: newUserId,
         email,
-        firstname: given_name,
-        lastname: family_name,
-        role: "User",
+        nameSinhala,
+        nameEnglish,
+        role: "member",
         isActive: true,
         image: picture,
         password: undefined,
-        dateOfBirth: null,
         isGoogleUser: true
       });
       await user.save();
     }
 
     const jwtToken = jwt.sign({
-      userId: user.userId,
+      userId: user.customerId,
       email: user.email,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      role: user.role,
-      image: user.image
+      nameSinhala: user.nameSinhala,
+      nameEnglish: user.name,
+      role: user.memberRole,
     }, process.env.JWT_KEY, { expiresIn: "1d" });
 
     res.json({ message: "Login successful", token: jwtToken, role: user.role });
@@ -192,12 +225,12 @@ const transport = nodemailer.createTransport({
 
 // ✅ Send OTP
 export async function sendOTP(req, res) {
-  const { email } = req.body;
+  const { email, userId, mobile } = req.body;
   if (!email) return res.status(400).json({ message: "Email is required" });
 
   try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // const user = await User.findOne({ email });
+    // if (!user) return res.status(404).json({ message: "User not found" });
 
     await OTP.deleteMany({ email });
     const randomOTP = Math.floor(100000 + Math.random() * 900000);
@@ -206,8 +239,10 @@ export async function sendOTP(req, res) {
     await transport.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Reset Password - FuelManager",
-      text: `Your password reset OTP is: ${randomOTP}. This OTP will expire in 10 minutes.`,
+      subject: "Reset Password - TSDF",
+      text: `Your password reset OTP is: ${randomOTP}. This OTP will expire in 10 minutes. 
+            Mobile number: ${mobile}
+            User ID: ${userId}`,
     });
 
     res.json({ message: "OTP sent successfully" });
@@ -218,16 +253,15 @@ export async function sendOTP(req, res) {
 
 // ✅ Reset Password
 export async function resetPassword(req, res) {
-  const { email, otp, newPassword } = req.body;
-
+  const { email, userId, newPassword } = req.body;
   try {
-    const otpDoc = await OTP.findOne({ email });
-    if (!otpDoc) return res.status(404).json({ message: "No OTP requests found" });
-    if (String(otp) !== String(otpDoc.otp)) return res.status(403).json({ message: "Invalid OTP" });
+    // const otpDoc = await OTP.findOne({ email });
+    // if (!otpDoc) return res.status(404).json({ message: "No OTP requests found" });
+    // if (String(otp) !== String(otpDoc.otp)) return res.status(403).json({ message: "Invalid OTP" });
 
-    await OTP.deleteMany({ email });
+    // await OTP.deleteMany({ email });
     const hashedPassword = bcrypt.hashSync(process.env.JWT_KEY + newPassword, 10);
-    await User.updateOne({ email }, { password: hashedPassword });
+    await User.updateOne({ customerId: userId }, { password: hashedPassword });
 
     res.json({ message: "Password has been reset successfully" });
   } catch (err) {
