@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Utility: Check if user is admin
+//✅ Utility: Check if user is admin
 export function isAdmin(req) {
   return req.user && req.user.memberRole === "admin";
 }
