@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import axios from "axios";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+// import { CommandStartedEvent } from "mongodb";
 
 dotenv.config();
 
@@ -32,63 +33,23 @@ export function getUserRole(req) {
 }
 
 
-// Utility: Generate next User ID
-async function generateUserId() {
-  const lastUser = await User.find().sort({ createdAt: -1 }).limit(1);
-  if (lastUser.length > 0) {
-    const lastId = parseInt(lastUser[0].userId.replace("USR-", ""));
-    return "USR-" + String(lastId + 1).padStart(4, "0");
-  }
-  return "USR-0001";
-}
-
-// ✅ Create User
-export async function createUser(req, res) {
-  try {
-    const { name, nameSinhala, mobile, email, password, memberRole, isActive, image } = req.body;
-
-    if (role === "admin" && (!req.user || req.user.role !== "admin")) {
-      return res.status(403).json({ message: "Only admins can create another admin user." });
-    }
-
-    if (!req.user) {
-      return res.status(403).json({ message: "Please login first to add users." });
-    }
-
-    const newUserId = await generateUserId();
-    const hashedPassword = bcrypt.hashSync(process.env.JWT_KEY + password, 10);
-
-    const user = new User({
-      userId: newUserId,
-      name,
-      nameSinhala,
-      mobile,
-      email,
-      password: hashedPassword,
-      memberRole,
-      isActive,
-      image,
-    });
-
-    await user.save();
-    res.status(201).json({ message: "User added successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Internal server error", error: err.message });
-  }
-}
-
 // ✅ Login User
 export async function loginUsers(req, res) {
-  const { userId, email, password } = req.body;
+  
+  const { email, password } = req.body;
 
-  if (!password || (!userId && !email)) {
-    return res.status(400).json({ message: "User ID or Email and password are required" });
+  if (!password && !email) {
+    return res.status(400).json({ message: "User ID, Mobile or Email and password are required" });
   }
 
   try {
-    const user = await User.findOne({
-      $or: [{ customerId: userId }, { email }],
-    });
+      const user = await User.findOne({
+        $or: [
+          { customerId: email },
+          { mobile: email},
+          { email }
+        ],
+      });
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -119,6 +80,7 @@ export async function loginUsers(req, res) {
     res.status(500).json({ message: "Login failed", error: err.message });
   }
 }
+
 
 
 // ✅ Delete User
@@ -170,45 +132,36 @@ export function getUser(req, res) {
 
 // ✅ Google Login
 export async function loginWithGoogle(req, res) {
-  const token = req.body.accessToken;
-  if (!token) return res.status(400).json({ message: "Access token is required" });
+    const token = req.body.accessToken;
+    if (!token) return res.status(400).json({ message: "Access token is required" });
 
-  try {
-    const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const { email, userId, nameEnglish, nameSinhala, role } = response.data;
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      const newUserId = await generateUserId();
-      user = new User({
-        userId: newUserId,
-        email,
-        nameSinhala,
-        nameEnglish,
-        role: "member",
-        isActive: true,
-        image: picture,
-        password: undefined,
-        isGoogleUser: true
+    try {
+      const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      await user.save();
+      const { email } = response.data;
+
+      const user = await User.findOne({ email: email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const jwtToken = jwt.sign({
+        userId: user.customerId,
+        email: user.email,
+        nameSinhala: user.nameSinhala,
+        nameEnglish: user.name,
+        role: user.memberRole,
+      }, process.env.JWT_KEY, { expiresIn: "1d" });
+
+      res.json({ message: "Login successful", 
+        token, 
+        memberRole: user.memberRole, 
+        userId: user.customerId,
+        nameSinhala: user.nameSinhala,
+        nameEnglish: user.name,
+      });      
+    } catch (err) {
+        res.status(500).json({ message: "Google login failed", error: err.message });
     }
-
-    const jwtToken = jwt.sign({
-      userId: user.customerId,
-      email: user.email,
-      nameSinhala: user.nameSinhala,
-      nameEnglish: user.name,
-      role: user.memberRole,
-    }, process.env.JWT_KEY, { expiresIn: "1d" });
-
-    res.json({ message: "Login successful", token: jwtToken, role: user.role });
-  } catch (err) {
-    res.status(500).json({ message: "Google login failed", error: err.message });
-  }
 }
 
 // ✅ Email Transporter

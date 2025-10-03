@@ -79,7 +79,7 @@ const customerSchema = new mongoose.Schema({
     },
     memberRole: {
         type: String,
-        enum: ['member', 'manager', 'chairman', 'secretary', 'treasurer', 'admin'],
+        enum: ['member', 'manager', 'chairman', 'secretary', 'treasurer', 'executive', 'admin'],
         default: 'member'
     },
     password: {
