@@ -43,18 +43,18 @@ export function getUserRole(req) {
 // ✅ Login User
 export async function loginUsers(req, res) {
   
-  const { email, password } = req.body;
+  const { loginId, password } = req.body;
 
-  if (!password && !email) {
+  if (!password && !loginId) {
     return res.status(400).json({ message: "User ID, Mobile or Email and password are required" });
   }
 
   try {
       const user = await User.findOne({
         $or: [
-          { customerId: email },
-          { mobile: email},
-          { email }
+          { customerId: loginId },
+          { mobile: loginId},
+          { email: loginId },
         ],
       });
 

@@ -14,7 +14,7 @@ const customerSchema = new mongoose.Schema({
     },
     title: {
         type: String,
-        enum: ['Mr.', 'Mrs.', 'Ms.']
+        enum: ['Mr.', 'Mrs.', 'Miss.']
     },
     name: {
         type: String,
@@ -35,12 +35,10 @@ const customerSchema = new mongoose.Schema({
         }
     ],
     address: {
-        type: String,
-        required: true
+        type: [String]
     },
     mobile: {
         type: String,
-        required: true
     },
     phone: {
         type: String,

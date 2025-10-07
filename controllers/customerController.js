@@ -140,7 +140,11 @@ export async function updateCustomer(req, res) {
     const updatingData = req.body;
 
     try {
-        const result = await Customer.updateOne({ customerId: customerId }, updatingData);
+        // const result = await Customer.updateOne({ customerId: customerId }, updatingData);
+        const result = await Customer.updateOne(
+            { customerId: customerId },
+            { ...updatingData, updatedAt: new Date() }
+        );
 
         if (result.matchedCount === 0) {
             // No customer found with that ID
