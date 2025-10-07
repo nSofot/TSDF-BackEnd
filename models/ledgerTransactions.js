@@ -8,7 +8,6 @@ const ledgerTransactionsSchema = new mongoose.Schema({
     },
     trxBookNo: {
         type: String,
-        required: true,
         unique: false
     },
     trxDate: {
@@ -18,7 +17,7 @@ const ledgerTransactionsSchema = new mongoose.Schema({
     transactionType: {
         type: String,
         required: true,
-        enum: ['voucher', 'receipt'],
+        enum: ['voucher', 'receipt', 'transfer'],
     },
     accountId: {
         type: String,

@@ -51,7 +51,7 @@ export async function createLedgerTransaction(req, res) {
             transactionType,
             description,
             isCredit,
-            trxAmount,
+            trxAmount: Number(trxAmount),
             createdBy: req.user?.id || "system",
         });
 

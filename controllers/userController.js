@@ -14,6 +14,13 @@ export function isAdmin(req) {
   return req.user && req.user.memberRole === "admin";
 }
 
+export function isManager(req) {
+  return req.user && req.user.memberRole === "manager";
+}
+
+export function isTreasurer(req) {
+  return req.user && req.user.memberRole === "treasurer";
+}
 
 export function getUserRole(req) {
   const allowedRoles = [
