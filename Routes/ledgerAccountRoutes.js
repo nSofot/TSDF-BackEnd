@@ -21,7 +21,7 @@ ledgerAccountRouter.get("/", getLedgerAccounts);
 ledgerAccountRouter.get("/:accountId", getLedgerAccountById);
 ledgerAccountRouter.put("/add-balance", addLederAccountBalance);
 ledgerAccountRouter.put("/subtract-balance", subtractLedgerAccountBalance);
-ledgerAccountRouter.put("/:accountId", updateLedgerAccount);
+ledgerAccountRouter.put("/update/:accountId", updateLedgerAccount);
 ledgerAccountRouter.delete("/:accountId", deleteLedgerAccount);
 
 

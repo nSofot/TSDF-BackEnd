@@ -124,11 +124,8 @@ export async function updateLedgerAccount(req, res) {
 }
 
 
-// controllers/ledger.js ---------------------------------------------
+
 export async function addLederAccountBalance(req, res) {
-    // if (!isAdmin(req)) {
-    //     return res.status(403).json({ message: "Not authorized" });
-    // }
 
     const { updates } = req.body;
 
@@ -145,7 +142,7 @@ export async function addLederAccountBalance(req, res) {
             return LedgerAccounts.updateOne(
                 { accountId },
                 {
-                    $inc: { accountBalance: Math.abs(amount) }, // assuming positive increment
+                    $inc: { accountBalance: Math.abs(amount) },
                     $set: { updatedAt: new Date() },
                 }
             );
