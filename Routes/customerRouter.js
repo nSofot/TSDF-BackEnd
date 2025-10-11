@@ -21,9 +21,9 @@ customerRouter.get("/search", searchCustomers);
 customerRouter.get("/", getCustomer);
 customerRouter.get("/:customerId", getCustomerById);
 customerRouter.delete("/:customerId", deleteCustomer);
-customerRouter.put("/addShares", addCustomerShares);
-customerRouter.put("/subtractShares", subtractCustomerShares);
-customerRouter.put("/:customerId", updateCustomer);
+customerRouter.put("/shares-add", addCustomerShares);
+customerRouter.put("/shares-subtract", subtractCustomerShares);
+customerRouter.put("/update/:customerId", updateCustomer);
 
 
 export default customerRouter;

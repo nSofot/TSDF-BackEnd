@@ -3,11 +3,6 @@ import { isAdmin } from "./userController.js";
 
 
 export async function CreateCustomer(req, res) {
-    // if (!isAdmin(req)) {
-    //     return res.status(403).json({
-    //         message: "You are not authorized to add customer",
-    //     });
-    // }
 
     let customerId = "001";
 
@@ -129,12 +124,6 @@ export async function deleteCustomer(req, res) {
 
 
 export async function updateCustomer(req, res) {
-    // if (!isAdmin(req)) {
-    //     res.status(403).json({
-    //         message: "You are not authorized to update customer"
-    //     });
-    //     return;
-    // }
 
     const customerId = req.params.customerId;
     const updatingData = req.body;
@@ -196,151 +185,179 @@ export async function searchCustomers(req, res) {
 
 
 export async function addCustomerShares(req, res) {
-    // if (!isAdmin(req)) {
-    //     return res.status(403).json({ message: "Not authorized" });
-    // }
+  const { updates } = req.body;
 
-    const { updates } = req.body;
+  if (!updates || !Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({ message: "Invalid data format: updates array required" });
+  }
 
-    if (!updates || !Array.isArray(updates)) {
-        return res.status(400).json({ message: "updates array is required" });
+  try {
+    const results = [];
+
+    for (const item of updates) {
+      const { customerId, amount } = item;
+
+      if (!customerId || isNaN(amount)) {
+        results.push({ customerId, status: "failed", message: "Invalid customerId or amount" });
+        continue;
+      }
+
+      const numericAmount = Number(amount);
+
+      const updated = await Customer.updateOne(
+        { customerId },
+        {
+          $inc: { shares: Math.abs(numericAmount) }, // positive increment
+          $set: { updatedAt: new Date() },
+        }
+      );
+
+      if (updated.matchedCount === 0) {
+        results.push({ customerId, status: "failed", message: "Customer not found" });
+      } else {
+        results.push({ customerId, status: "success" });
+      }
     }
 
-    try {
-        const updatePromises = updates.map(({ customerId, amount }) => {
-            if (typeof amount !== 'number') {
-                throw new Error(`Invalid amount for customerId ${customerId}`);
-            }
-
-            return Customer.updateOne(
-                { customerId },
-                {
-                    $inc: { shares: Math.abs(amount) }, // assuming positive increment
-                    $set: { updatedAt: new Date() },
-                }
-            );
-        });
-
-        await Promise.all(updatePromises);
-
-        res.json({ message: "Customer shares added successfully" });
-    } catch (err) {
-        console.error("Bulk addition failed:", err);
-        res.status(500).json({
-            message: "Failed to add customer balance",
-            error: err.message || err,
-        });
-    }
+    res.json({ message: "Processed shares addition", results });
+  } catch (err) {
+    console.error("Bulk addition failed:", err);
+    res.status(500).json({
+      message: "Failed to add customer shares",
+      error: err.message || err,
+    });
+  }
 }
 
 
 export async function subtractCustomerShares(req, res) {
-    if (!isAdmin(req)) {
-        return res.status(403).json({ message: "Not authorized" });
+
+  const { updates } = req.body;
+
+  if (!updates || !Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({ message: "Invalid data format: updates array required" });
+  }
+
+  try {
+    const results = [];
+
+    for (const item of updates) {
+      const { customerId, amount } = item;
+
+      if (!customerId || isNaN(amount)) {
+        results.push({ customerId, status: "failed", message: "Invalid customerId or amount" });
+        continue;
+      }
+
+      const numericAmount = Number(amount);
+
+      const updated = await Customer.updateOne(
+        { customerId },
+        {
+          $inc: { shares: -Math.abs(numericAmount) }, // subtracting as negative increment
+          $set: { updatedAt: new Date() },
+        }
+      );
+
+      if (updated.matchedCount === 0) {
+        results.push({ customerId, status: "failed", message: "Customer not found" });
+      } else {
+        results.push({ customerId, status: "success" });
+      }
     }
 
-    const { updates } = req.body;
-
-    if (!updates || !Array.isArray(updates)) {
-        return res.status(400).json({ message: "updates array is required" });
-    }
-
-    try {
-        const updatePromises = updates.map(({ customerId, amount }) => {
-            if (!customerId || typeof amount !== 'number') {
-                throw new Error(`Invalid data for customerId: ${customerId}`);
-            }
-
-            return Customer.updateOne(
-                { customerId },
-                {
-                    $inc: { shares: -Math.abs(amount) }, // subtracting as negative increment
-                    $set: { updatedAt: new Date() },
-                }
-            );
-        });
-
-        await Promise.all(updatePromises);
-
-        res.json({ message: "Customer balances subtracted successfully" });
-    } catch (err) {
-        console.error("Balance subtraction failed:", err);
-        res.status(500).json({
-            message: "Failed to subtract customer balance",
-            error: err.message || err,
-        });
-    }
+    res.json({ message: "Processed shares subtraction", results });
+  } catch (err) {
+    console.error("Bulk subtraction failed:", err);
+    res.status(500).json({
+      message: "Failed to subtract customer shares",
+      error: err.message || err,
+    });
+  }
 }
 
 
 export async function addCustomerMembershipFee(req, res) {
-    const { updates } = req.body;
+  const { updates } = req.body;
 
-    if (!updates || !Array.isArray(updates)) {
-        return res.status(400).json({ message: "updates array is required" });
-    }
-
-    try {
-        const updatePromises = updates.map(({ customerId, amount }) => {
-            if (typeof amount !== 'number') {
-                throw new Error(`Invalid amount for customerId ${customerId}`);
-            }
-
-            return Customer.updateOne(
-                { customerId },
-                {
-                    $inc: { membership: Math.abs(amount) },
-                    $set: { updatedAt: new Date() },
-                }
-            );
-        });
-
-        await Promise.all(updatePromises);
-
-        res.json({ message: "Customer membership fee added successfully" });
-    } catch (err) {
-        res.status(500).json({
-            message: "Failed to add customer membership fee",
-            error: err.message || err,
-        });
-    }    
-}
-
-
-
-export async function subtractCustomerMembershipFee(req, res) {
+  if (!updates || !Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({ message: "Invalid data format: updates array required" });
+  }
 
   try {
-    const { customerId, amount } = req.body;
+    const results = [];
 
-     // ✅ Validate input
-    if (!customerId || isNaN(amount)) {
-      return res.status(400).json({ message: "Invalid data format" });
-    }
+    for (const item of updates) {
+      const { customerId, amount } = item;
 
-     // ✅ Convert amount to number to prevent type issues
-    const numericAmount = Number(amount);
-
-     //✅ Update membership as a number
-    const updated = await Customer.updateOne(
-      { customerId },
-      {
-        $inc: { membership: -Math.abs(numericAmount) },
-        $set: { updatedAt: new Date() },
+      if (!customerId || isNaN(amount)) {
+        results.push({ customerId, status: "failed", message: "Invalid customerId or amount" });
+        continue;
       }
-    );
 
-    // ✅ Handle not found
-    if (updated.matchedCount === 0) {
-      return res.status(404).json({ message: "Customer not found" });
+      const numericAmount = Number(amount);
+
+      const updated = await Customer.updateOne(
+        { customerId },
+        {
+          $inc: { membership: Math.abs(numericAmount) },
+          $set: { updatedAt: new Date() },
+        }
+      );
+
+      if (updated.matchedCount === 0) {
+        results.push({ customerId, status: "failed", message: "Customer not found" });
+      } else {
+        results.push({ customerId, status: "success" });
+      }
     }
 
-    res.json({ message: "Membership fee subtracted successfully" });
+    res.json({ message: "Processed membership fee addition", results });
   } catch (err) {
-    console.error("Balance subtraction failed:", err);
+    console.error("Membership fee addition failed:", err);
     res.status(500).json({
-      message: "Failed to subtract customer membership fee",
+      message: "Failed to add customer membership fee",
       error: err.message || err,
     });
+  }
+}
+
+// controllers/customer.js
+export async function subtractCustomerMembershipFee(req, res) {
+  const { updates } = req.body;
+
+  if (!updates || !Array.isArray(updates)) {
+    return res.status(400).json({ message: "updates array is required" });
+  }
+
+  try {
+    const results = await Promise.all(
+      updates.map(async ({ customerId, amount }) => {
+        if (!customerId || isNaN(amount)) {
+          return { customerId, status: "failed", message: "Invalid data" };
+        }
+
+        const numericAmount = Number(amount);
+
+        const updated = await Customer.updateOne(
+          { customerId },
+          {
+            $inc: { membership: -Math.abs(numericAmount) },
+            $set: { updatedAt: new Date() },
+          }
+        );
+
+        if (updated.matchedCount === 0) {
+          return { customerId, status: "failed", message: "Customer not found" };
+        }
+
+        return { customerId, status: "success" };
+      })
+    );
+
+    res.json({ message: "Processed membership fee subtraction", results });
+  } catch (err) {
+    console.error("Bulk subtraction failed:", err);
+    res.status(500).json({ message: "Failed to subtract membership", error: err.message });
   }
 }

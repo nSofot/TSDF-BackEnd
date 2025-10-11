@@ -13,6 +13,7 @@ import ledgerAccountRouter from "./Routes/ledgerAccountRoutes.js";
 import ledgerTransactionsRouter from "./Routes/ledgerTransactionsRoutes.js";
 import loanMasterRouter from "./Routes/loanMasterRoutes.js";
 import bookReferencesRouter from "./Routes/bookReferencesRoutes.js";
+import sharesTransactionRouter from "./Routes/sharesTransactionRoutes.js";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use("/api/ledgerAccounts", ledgerAccountRouter);
 app.use("/api/ledgerTransactions", ledgerTransactionsRouter);
 app.use("/api/loanMaster", loanMasterRouter);
 app.use("/api/bookReferences", bookReferencesRouter);
+app.use("/api/sharesTransactions", sharesTransactionRouter);
 
 // Default 404 handler
 app.use((req, res) => {
