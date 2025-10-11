@@ -3,72 +3,94 @@ import multer from "multer";
 import xlsx from "xlsx";
 import fs from "fs";
 import Customer from "../models/customer.js";
-import MembershipTransactions from "../models/membershipTransaction.js";
+import SharesTransactions from "../models/sharesTransactions.js";
+
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" }); // temp folder for uploaded files
+const upload = multer({ dest: "uploads/" }); // temporary upload folder
 
 // POST /api/import-customers
 router.post("/", upload.single("file"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
 
+  try {
     // 1️⃣ Read uploaded Excel file
     const workbook = xlsx.readFile(req.file.path);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = xlsx.utils.sheet_to_json(worksheet);
 
     if (!rows.length) {
+      fs.unlinkSync(req.file.path);
       return res.status(400).json({ error: "Excel file is empty" });
     }
 
-    // 2️⃣ Process each row
     let updatedCount = 0;
+    let skippedCount = 0;
+    let transactions = [];
 
+    // 2️⃣ Process each row
     for (const row of rows) {
-      const customerId = row["Member No"];
+      const customerId = String(row["Member No"] || "").trim();
       const numericAmount = Number(row["Profit"]) || 0;
-      const transactionDate = row["Date"] ? new Date(row["Date"]) : null;
+      const transactionDate = row["Date"] ? new Date(row["Date"]) : new Date();
       const remark = row["Remark"] || "";
 
-      if (!customerId) continue; // skip invalid rows
+      if (!customerId) {
+        skippedCount++;
+        continue; // skip invalid rows
+      }
 
-      const updateResult = await Customer.updateOne(
+      // Check if customer exists
+      const customer = await Customer.findOne({ customerId });
+      if (!customer) {
+        skippedCount++;
+        continue; // skip if no matching customer
+      }
+
+      // Update customer shares
+      await Customer.updateOne(
         { customerId },
         {
-          $inc: { shares: Math.abs(numericAmount) }, // increment shares
+          $inc: { shares: Math.abs(numericAmount) },
           $set: { updatedAt: new Date() },
         }
       );
 
-      if (updateResult.modifiedCount > 0) updatedCount++;
+      updatedCount++;
 
-      // (optional) add a membership transaction record
-      await MembershipTransactions.create({
-        trxNumber: "PRFT-",
+      // Queue membership transaction (batch insert later)
+      transactions.push({
+        trxNumber: `PRFT-${Date.now()}-${customerId}`,
         trxBookNo: "",
         customerId,
         transactionType: "profit",
-        transactionDate: new Date(),
+        transactionDate,
         trxAmount: Math.abs(numericAmount),
         isCredit: false,
         description: remark,
       });
     }
 
-    // 3️⃣ Cleanup temp file
+    // 3️⃣ Insert transactions in bulk for performance
+    if (transactions.length) {
+      await SharesTransactions.insertMany(transactions);
+    }
+
+    // 4️⃣ Cleanup temp file
     fs.unlinkSync(req.file.path);
 
-    // 4️⃣ Send response
+    // 5️⃣ Send response
     res.json({
       success: true,
-      updated: updatedCount,
+      updatedCustomers: updatedCount,
+      skippedRows: skippedCount,
       totalRows: rows.length,
     });
   } catch (err) {
     console.error("Import error:", err);
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     res.status(500).json({ error: err.message });
   }
 });
