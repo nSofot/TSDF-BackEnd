@@ -1,15 +1,23 @@
 import BookReferences from "../models/bookReferences.js";
 
 export const createBookReference = async (req, res) => {
-    try {
-        const bookReference = new BookReferences(req.body);
-        await bookReference.save();
-        res.json(bookReference);
-    } catch (err) {
-        console.error("Error saving book reference:", err);
-        res.status(500).json({ message: "Server error while saving book reference" });
+  console.log(req.body);
+  try {
+
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ message: "Request body is empty" });
     }
+
+    const bookReference = new BookReferences(req.body);
+    const savedRef = await bookReference.save();
+
+    res.status(201).json(savedRef);
+  } catch (err) {
+    console.error("❌ Error saving book reference:", err.message);
+    res.status(500).json({ message: err.message });
+  }
 };
+
 
 
 export async function getBookReferenceByBookNoAndTransactionType(req, res) {

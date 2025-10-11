@@ -1,7 +1,7 @@
 import { isTreasurer } from "./userController.js";
-import MembershipTransaction from "../models/membershipTransactions.js";
+import SharesTransaction from "../models/sharesTransactions.js";
 
-export async function createMembershipTransaction(req, res) {
+export async function createSharesTransaction(req, res) {
   try {
 
     const { transactionType, trxAmount, isCredit } = req.body;
@@ -19,8 +19,7 @@ export async function createMembershipTransaction(req, res) {
     const prefixMap = {
       voucher: "VOCH-",
       receipt: "RCPT-",
-      membershipFee: "MEMF-",
-      funeralFee: "FUNF-",
+      profit: "PRFT-"
     };
 
     const prefix = prefixMap[transactionType];
@@ -30,7 +29,7 @@ export async function createMembershipTransaction(req, res) {
 
     // Generate next trxNumber
     let referenceNumber = `${prefix}000001`;
-    const lastTransaction = await MembershipTransaction.findOne({ transactionType }).sort({ createdAt: -1 });
+    const lastTransaction = await SharesTransaction.findOne({ transactionType }).sort({ createdAt: -1 });
 
     if (lastTransaction) {
       const match = lastTransaction.trxNumber?.match(new RegExp(`^${prefix}(\\d{6})$`));
@@ -43,7 +42,7 @@ export async function createMembershipTransaction(req, res) {
     req.body.trxNumber = referenceNumber;
     if (!req.body.transactionDate) req.body.transactionDate = new Date();
 
-    const newTransaction = new MembershipTransaction(req.body);
+    const newTransaction = new SharesTransaction(req.body);
     await newTransaction.save();
 
     res.status(201).json({
@@ -60,10 +59,10 @@ export async function createMembershipTransaction(req, res) {
 }
 
 
-export async function getMembershipTransactionsByMemberId(req, res) {
+export async function getSharesTransactionsByMemberId(req, res) {
   try {
     const { customerId } = req.params;
-    const transactions = await MembershipTransaction.find({ customerId });
+    const transactions = await SharesTransaction.find({ customerId });
     res.json(transactions);
   } catch (err) {
     console.error("Error fetching member transactions:", err);
