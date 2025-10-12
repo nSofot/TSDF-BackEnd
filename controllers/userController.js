@@ -29,6 +29,7 @@ export function getUserRole(req) {
     "chairman",
     "secretary",
     "treasurer",
+    "executive",
     "admin",
   ];
 
@@ -65,11 +66,12 @@ export async function loginUsers(req, res) {
 
     const token = jwt.sign(
       {
-        userId: user.customerId,  
+        userId: user.customerId,
+        mobile: user.mobile,
         email: user.email,
         nameSinhala: user.nameSinhala,
         nameEnglish: user.name,
-        memberRole: user.memberRole
+        memberRole: user.memberRole,
       },
       process.env.JWT_KEY,
       { expiresIn: "1d" }
@@ -77,10 +79,12 @@ export async function loginUsers(req, res) {
 
     res.json({ message: "Login successful", 
       token, 
-      memberRole: user.memberRole, 
-      userId: user.customerId,
-      nameSinhala: user.nameSinhala,
-      nameEnglish: user.name,
+        userId: user.customerId,
+        mobile: user.mobile,
+        email: user.email,
+        nameSinhala: user.nameSinhala,
+        nameEnglish: user.name,
+        memberRole: user.memberRole,
      });
   } catch (err) {
     console.error("Login error:", err); // important for debugging
@@ -133,43 +137,97 @@ export async function getUsers(req, res) {
 export function getUser(req, res) {
   if (!req.user) return res.status(403).json({ message: "Unauthorized" });
 
-  const { customerId, email, nameSinhala, name, memberRole } = req.user;
-  res.json({ customerId, email, nameSinhala, name, memberRole});
+  const { customerId, mobile, email, nameSinhala, name, memberRole } = req.user;
+  res.json({ customerId, mobile, email, nameSinhala, name, memberRole});
 }
 
 // ✅ Google Login
+// export async function loginWithGoogle(req, res) {
+//     const token = req.body.accessToken;
+ 
+//     if (!token) return res.status(400).json({ message: "Access token is required" });
+
+//     try {
+//       const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+//       const { email } = response.data;
+
+//       const user = await User.findOne({ email: email });
+//       if (!user) return res.status(404).json({ message: "User not found" });
+
+//       const jwtToken = jwt.sign({
+//         userId: user.customerId,
+//         mobile: user.mobile,
+//         email: user.email,
+//         nameSinhala: user.nameSinhala,
+//         nameEnglish: user.name,
+//         memberRole: user.memberRole,
+//       }, process.env.JWT_KEY, { expiresIn: "1d" });
+
+//       res.json({ message: "Login successful", 
+//         token, 
+//         userId: user.customerId,
+//         mobile: user.mobile,
+//         email: user.email,
+//         nameSinhala: user.nameSinhala,
+//         nameEnglish: user.name,
+//         memberRole: user.memberRole,
+//       });      
+//     } catch (err) {
+//         res.status(500).json({ message: "Google login failed", error: err.message });
+//     }
+// }
+
+
 export async function loginWithGoogle(req, res) {
-    const token = req.body.accessToken;
-    if (!token) return res.status(400).json({ message: "Access token is required" });
+  const { accessToken } = req.body;
+  if (!accessToken) return res.status(400).json({ message: "Access token is required" });
 
-    try {
-      const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const { email } = response.data;
+  try {
+    // ✅ Verify Google user info
+    const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
-      const user = await User.findOne({ email: email });
-      if (!user) return res.status(404).json({ message: "User not found" });
+    const { email, name, picture } = response.data;
+    if (!email) return res.status(400).json({ message: "Invalid Google user info" });
 
-      const jwtToken = jwt.sign({
+    // ✅ Find user in your database
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // ✅ Generate your own JWT
+    const jwtToken = jwt.sign(
+      {
         userId: user.customerId,
+        mobile: user.mobile,
         email: user.email,
         nameSinhala: user.nameSinhala,
         nameEnglish: user.name,
-        role: user.memberRole,
-      }, process.env.JWT_KEY, { expiresIn: "1d" });
+        memberRole: user.memberRole,
+      },
+      process.env.JWT_KEY,
+      { expiresIn: "1d" }
+    );
 
-      res.json({ message: "Login successful", 
-        token, 
-        memberRole: user.memberRole, 
-        userId: user.customerId,
-        nameSinhala: user.nameSinhala,
-        nameEnglish: user.name,
-      });      
-    } catch (err) {
-        res.status(500).json({ message: "Google login failed", error: err.message });
-    }
+    // ✅ Return JWT, not Google token
+    res.json({
+      message: "Login successful",
+      token: jwtToken,
+      userId: user.customerId,
+      mobile: user.mobile,
+      email: user.email,
+      nameSinhala: user.nameSinhala,
+      nameEnglish: user.name,
+      memberRole: user.memberRole,
+    });
+  } catch (err) {
+    console.error("Google login failed:", err.response?.data || err.message);
+    res.status(500).json({ message: "Google login failed", error: err.message });
+  }
 }
+
 
 // ✅ Email Transporter
 const transport = nodemailer.createTransport({
