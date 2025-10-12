@@ -10,7 +10,7 @@ const customerSchema = new mongoose.Schema({
         type: String,
         required: true,
         default: 'shareholder',
-        enum: ['shareholder', 'external']
+        enum: ['shareholder', 'funds', 'external']
     },
     title: {
         type: String,
