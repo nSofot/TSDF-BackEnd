@@ -1,7 +1,6 @@
 import AttendanceRecord from "../models/attendanceRecord.js";
 
 export const createAttendanceRecord = async (req, res) => {
-  console.log(req.body);
   try {
     const attendanceData = req.body; // Expecting an array of objects [{ date, memberId, isPresent }, ...]
 
@@ -43,3 +42,26 @@ export const getAllAttendanceRecords = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch attendance records" });
   }
 }
+
+export const getAttendanceRecordsByDate = async (req, res) => {
+  try {
+    const { year, month } = req.params; // e.g., /api/attendance/2025/10
+
+    // Convert to numbers
+    const y = parseInt(year);
+    const m = parseInt(month);
+
+    // Create start and end dates for the month
+    const startDate = new Date(y, m - 1, 1);              // first day of month
+    const endDate = new Date(y, m, 0, 23, 59, 59, 999);   // last day of month
+
+    const records = await AttendanceRecord.find({
+      date: { $gte: startDate, $lte: endDate }
+    });
+
+    res.json(records);
+  } catch (error) {
+    console.error("Error fetching attendance records:", error);
+    res.status(500).json({ error: "Failed to fetch attendance records" });
+  }
+};
