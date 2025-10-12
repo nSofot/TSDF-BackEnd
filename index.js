@@ -18,6 +18,7 @@ import bookReferencesRouter from "./Routes/bookReferencesRoutes.js";
 import sharesTransactionRouter from "./Routes/sharesTransactionRoutes.js";
 import attendanceRecordRoute from "./Routes/attendanceRecordRoute.js";
 import importSharesProfitsRoute from "./Routes/importSharesProfitsRoute.js";
+import importCustomerRoute from "./Routes/importCustomerRoute.js";
 
 
 
@@ -73,6 +74,8 @@ app.use("/api/bookReferences", bookReferencesRouter);
 app.use("/api/sharesTransactions", sharesTransactionRouter);
 app.use("/api/attendanceRecord", attendanceRecordRoute);
 app.use("/api/importSharesProfits", importSharesProfitsRoute);
+app.use("/api/import-customers", importCustomerRoute);
+
 
 // 5️⃣ Health Check Route (for testing/deployment)
 app.get("/", (req, res) => {
