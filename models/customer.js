@@ -45,7 +45,6 @@ const customerSchema = new mongoose.Schema({
     },
     email: {
         type: String, 
-        unique: true 
     },
     image: [
         {type: String}
@@ -68,9 +67,6 @@ const customerSchema = new mongoose.Schema({
     holdAmount: {
         type: Number,
         default: 0
-    },
-    birthDate: {
-        type: Date,
     },
     notes: {
         type: String
