@@ -3,8 +3,7 @@ import mongoose from "mongoose";
 const ledgerTransactionsSchema = new mongoose.Schema({
     trxId: {
         type: String,
-        required: true,
-        unique: false
+        required: true
     },
     trxBookNo: {
         type: String,
