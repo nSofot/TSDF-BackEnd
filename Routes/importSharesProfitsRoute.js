@@ -20,6 +20,7 @@ router.post("/", upload.single("file"), async (req, res) => {
     const workbook = xlsx.readFile(req.file.path);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = xlsx.utils.sheet_to_json(worksheet);
+    const dateAsAt = req.body.dateAsAt;
 
     if (!rows.length) {
       fs.unlinkSync(req.file.path);
@@ -34,7 +35,8 @@ router.post("/", upload.single("file"), async (req, res) => {
     for (const row of rows) {
       const customerId = String(row["Member No"] || "").trim();
       const numericAmount = Number(row["Profit"]) || 0;
-      const transactionDate = row["Date"] ? new Date(row["Date"]) : new Date();
+      // const transactionDate = row["Date"] ? new Date(row["Date"]) : new Date();
+      const transactionDate = dateAsAt ? new Date(dateAsAt) : new Date();
       const remark = row["Remark"] || "";
 
       if (!customerId) {
