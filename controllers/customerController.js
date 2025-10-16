@@ -64,20 +64,8 @@ export async function getCustomerById(req, res) {
             })
             return
         }
-
         if(customer.isActive == true){
             res.json(customer)
-        }
-        else{
-            if(!isAdmin(req)){
-                res.status(404).json({
-                message : "Customer not found"
-            })
-            return
-            }
-            else{
-                res.json(customer)
-            }                
         }
     }
 

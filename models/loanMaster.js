@@ -52,7 +52,7 @@ const loanMasterSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    isApprovedExecute: {
+    isApprovedExecutive: {
         type: Boolean,
         default: false
     },

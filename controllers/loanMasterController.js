@@ -134,7 +134,6 @@ export async function getLoanPendingApplicationBycustomerId(req, res) {
             isGranted: false
         });
 
-
         if (!loanMaster) {
             return res.status(404).json({
                 message: "Applicant has no pending loan application"

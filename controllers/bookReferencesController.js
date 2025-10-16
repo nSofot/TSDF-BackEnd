@@ -1,7 +1,6 @@
 import BookReferences from "../models/bookReferences.js";
 
 export const createBookReference = async (req, res) => {
-  console.log(req.body);
   try {
 
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -13,7 +12,6 @@ export const createBookReference = async (req, res) => {
 
     res.status(201).json(savedRef);
   } catch (err) {
-    console.error("❌ Error saving book reference:", err.message);
     res.status(500).json({ message: err.message });
   }
 };
