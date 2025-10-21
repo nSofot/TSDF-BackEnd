@@ -60,7 +60,7 @@ export async function getCustomerById(req, res) {
         const customer = await Customer.findOne({customerId : customerId})
         if (customer == null) {
             res.status(404).json({
-                message : "Customer not found"
+                message : "Member not found"
             })
             return
         }
@@ -71,7 +71,7 @@ export async function getCustomerById(req, res) {
 
     catch(err){
         res.status(500).json({
-            message : "Error getting customer",
+            message : "Error getting member",
             error: err
         })
     }
@@ -82,7 +82,7 @@ export async function getCustomerById(req, res) {
 export async function deleteCustomer(req, res) {
     if (!isAdmin(req)) {
         res.status(403).json({
-            message: "You are not authorized to delete customer"
+            message: "You are not authorized to delete member"
         });
         return;
     }
@@ -126,17 +126,17 @@ export async function updateCustomer(req, res) {
         if (result.matchedCount === 0) {
             // No customer found with that ID
             res.status(404).json({
-                message: "Customer not found"
+                message: "Member not found"
             });
             return;
         }
 
         res.json({
-            message: "Customer updated successfully"
+            message: "Member updated successfully"
         });
     } catch (err) {
         res.status(500).json({
-            message: "Failed to update customer",
+            message: "Failed to update member",
             error: err.message || err
         });
     }
