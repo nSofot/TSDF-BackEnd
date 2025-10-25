@@ -2,24 +2,53 @@ import e from "cors";
 import LoanMaster from "../models/loanMaster.js";
 import { isAdmin } from "./userController.js";
 
-export async function createLoanMaster(req, res) {
-    // if (!isAdmin(req)) return res.status(403).json({ message: "Unauthorized access" });
+// export async function createLoanMaster(req, res) {
+//     // if (!isAdmin(req)) return res.status(403).json({ message: "Unauthorized access" });
     
-    try {
-        let loanId = "LAPC-000001";
-        const lastLoan = await LoanMaster.find().sort({ createdAt: -1 }).limit(1);
-        if (lastLoan.length > 0) {
-            const lastId = parseInt(lastLoan[0].loanId.replace("LAPC-", ""));
-            loanId = "LAPC-" + String(lastId + 1).padStart(6, "0");
-        }
+//     try {
+//         const lastLoan = await LoanMaster.findOne().sort({ createdAt: -1 });
+//         let loanId = "LAPC-000001";
+//         if (lastLoan) {
+//             const lastId = parseInt(lastLoan.loanId.replace("LAPC-", ""));
+//             loanId = "LAPC-" + String(lastId + 1).padStart(6, "0");
+//         }
+//         req.body.loanId = loanId;
 
-        req.body.loanId = loanId;
-        const loanMaster = new LoanMaster(req.body);
-        await loanMaster.save();
-        res.json(loanMaster);
-    } catch (err) {
-        res.status(500).json({ message: "Failed to create loan master", error: err.message });
+//         const loanMaster = new LoanMaster(req.body);
+//         await loanMaster.save();
+//         res.json(loanMaster);
+//     } catch (err) {
+//         res.status(500).json({ message: "Failed to create loan master", error: err.message });
+//     }
+// }
+export async function createLoanMaster(req, res) {
+  try {
+    const lastLoan = await LoanMaster.findOne().sort({ loanId: -1 });
+    let loanId = "LAPC-000001";
+    if (lastLoan) {
+      const lastId = parseInt(lastLoan.loanId.replace("LAPC-", ""));
+      loanId = "LAPC-" + String(lastId + 1).padStart(6, "0");
     }
+    req.body.loanId = loanId;
+    req.body.amount = Number(req.body.amount);
+    req.body.loanDuration = Number(req.body.loanDuration);
+    req.body.loanInterestRate = Number(req.body.loanInterestRate);
+    req.body.dueAmount = Number(req.body.dueAmount);
+    req.body.isGranted = Boolean(req.body.isGranted);
+    req.body.applicationDate = new Date(req.body.applicationDate);
+
+    const loanMaster = new LoanMaster(req.body);
+    await loanMaster.save();
+    res.json(loanMaster);
+
+  } catch (err) {
+    console.error("🔥 LoanMaster creation error:", err);
+    res.status(500).json({ 
+      message: "Failed to create loan master", 
+      error: err.message, 
+      stack: err.stack 
+    });
+  }
 }
 
 
