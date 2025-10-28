@@ -18,6 +18,10 @@ const ledgerTransactionsSchema = new mongoose.Schema({
         required: true,
         enum: ['voucher', 'receipt', 'transfer'],
     },
+    transactionCategory: {
+        type: String,
+        default: ""
+    },
     accountId: {
         type: String,
         required: true
