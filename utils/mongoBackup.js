@@ -1,3 +1,4 @@
+// mongoBackup.js
 import cron from "node-cron";
 import { exec } from "child_process";
 import fs from "fs";
@@ -7,7 +8,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const BACKUP_DIR = path.resolve("./backups");
-const DB_NAME = process.env.DB_NAME || "fuel_station_erp";
+const DB_NAME = process.env.DB_NAME || "Tsdf";
 const MONGO_URI = process.env.MONGODB_URL;
 const DATE = new Date().toISOString().replace(/[:.]/g, "-");
 const BACKUP_NAME = `${DB_NAME}_backup_${DATE}`;
@@ -17,24 +18,27 @@ const FULL_PATH = path.join(BACKUP_DIR, BACKUP_NAME);
 if (!fs.existsSync(BACKUP_DIR)) {
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
 }
+console.log("Backup folder path:", BACKUP_DIR);
 
 // === Backup function ===
-function runMongoBackup() {
-  console.log(`🚀 Starting MongoDB backup: ${BACKUP_NAME}`);
+export function runMongoBackup(triggerSource = "auto") {
+  console.log(`🚀 Starting MongoDB backup (${triggerSource}) - ${BACKUP_NAME}`);
 
   const dumpCmd = `mongodump --uri="${MONGO_URI}" --db="${DB_NAME}" --out="${FULL_PATH}"`;
 
-  exec(dumpCmd, (err) => {
+  exec(dumpCmd, (err, stdout, stderr) => {
     if (err) {
       console.error("❌ Backup failed:", err);
+      console.error("STDERR:", stderr);
       return;
     }
+    if (stderr) console.warn("⚠️ mongodump warnings:", stderr);
 
-    // Compress the backup folder
     const compressCmd = `tar -czf "${FULL_PATH}.tar.gz" -C "${BACKUP_DIR}" "${BACKUP_NAME}" && rm -rf "${FULL_PATH}"`;
-    exec(compressCmd, (compressErr) => {
+    exec(compressCmd, (compressErr, cstdout, cstderr) => {
       if (compressErr) {
         console.error("⚠️ Compression failed:", compressErr);
+        console.error("STDERR:", cstderr);
       } else {
         console.log(`✅ Backup completed: ${FULL_PATH}.tar.gz`);
         cleanOldBackups();
@@ -63,6 +67,3 @@ cron.schedule("0 2 * * *", () => {
 });
 
 console.log("⏰ MongoDB Auto Backup Scheduler initialized (runs daily at 2 AM)");
-
-// ✅ Export the function so backupRouter.js can call it
-export { runMongoBackup };

@@ -11,22 +11,17 @@ import { fileURLToPath } from "url";
 // Route Imports
 import userRouter from "./Routes/userRouter.js";
 import customerRouter from "./Routes/customerRouter.js";
-import membershipTransactionRouter from "./Routes/membershipTransactionRouter.js";
 import loanTransactionsRouter from "./Routes/loanTransactionsRoutes.js";
 import ledgerAccountRouter from "./Routes/ledgerAccountRoutes.js";
 import ledgerTransactionsRouter from "./Routes/ledgerTransactionsRoutes.js";
 import loanMasterRouter from "./Routes/loanMasterRoutes.js";
 import bookReferencesRouter from "./Routes/bookReferencesRoutes.js";
+import membershipTransactionRouter from "./Routes/membershipTransactionRouter.js";
 import sharesTransactionRouter from "./Routes/sharesTransactionRoutes.js";
 import attendanceRecordRoute from "./Routes/attendanceRecordRoute.js";
 import importSharesProfitsRoute from "./Routes/importSharesProfitsRoute.js";
 import importCustomerRoute from "./Routes/importCustomerRoute.js";
-import "./utils/autoBackup.js";
 import backupRouter from "./Routes/backupRouter.js";
-
-
-
-
 
 
 dotenv.config();
@@ -82,7 +77,7 @@ app.use("/api/sharesTransactions", sharesTransactionRouter);
 app.use("/api/attendanceRecord", attendanceRecordRoute);
 app.use("/api/importSharesProfits", importSharesProfitsRoute);
 app.use("/api/import-customers", importCustomerRoute);
-app.use("/api/backup", backupRouter);
+app.use("/api/backup-now", backupRouter);
 
 
 
