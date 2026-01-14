@@ -1,18 +1,21 @@
 import express from "express";
-import { runMongoBackup } from "../utils/autoBackup.js";
+import { runMongoBackup } from "../utils/mongoBackup.js";
 
-const router = express.Router();
 
-// Secure route (admin only recommended)
-router.post("/now", async (req, res) => {
+const backupRouter = express.Router();
+
+backupRouter.post("/now", (req, res) => {
+  // if (!req.user || req.user.role !== "admin") {
+  //   return res.status(403).json({ message: "Unauthorized" });
+  // }
   try {
-    console.log("🧩 Manual backup triggered via API");
     runMongoBackup();
-    res.status(200).json({ message: "Backup process started successfully" });
+    res.status(200).json({ message: "Backup started successfully" });
   } catch (err) {
-    console.error("❌ Manual backup failed:", err);
-    res.status(500).json({ message: "Backup failed" });
+    console.error(err);
+    res.status(500).json({ message: "Backup failed to start" });
   }
 });
 
-export default router;
+
+export default backupRouter;

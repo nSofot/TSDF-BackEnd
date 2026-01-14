@@ -176,7 +176,9 @@ export async function addCustomerShares(req, res) {
   const { updates } = req.body;
 
   if (!updates || !Array.isArray(updates) || updates.length === 0) {
-    return res.status(400).json({ message: "Invalid data format: updates array required" });
+    return res
+      .status(400)
+      .json({ message: "Invalid data format: updates array required" });
   }
 
   try {
@@ -185,23 +187,33 @@ export async function addCustomerShares(req, res) {
     for (const item of updates) {
       const { customerId, amount } = item;
 
-      if (!customerId || isNaN(amount)) {
-        results.push({ customerId, status: "failed", message: "Invalid customerId or amount" });
+      if (!customerId || typeof amount !== "number" || isNaN(amount)) {
+        results.push({
+          customerId,
+          status: "failed",
+          message: "Invalid customerId or amount",
+        });
         continue;
       }
 
-      const numericAmount = Number(amount);
+      // ✅ FIX: round to 2 decimal places (NUMBER)
+      const roundedAmount =
+        Math.round(Math.abs(amount) * 100) / 100;
 
       const updated = await Customer.updateOne(
         { customerId },
         {
-          $inc: { shares: Math.abs(numericAmount) }, // positive increment
+          $inc: { shares: roundedAmount }, // positive increment
           $set: { updatedAt: new Date() },
         }
       );
 
       if (updated.matchedCount === 0) {
-        results.push({ customerId, status: "failed", message: "Customer not found" });
+        results.push({
+          customerId,
+          status: "failed",
+          message: "Customer not found",
+        });
       } else {
         results.push({ customerId, status: "success" });
       }
@@ -219,11 +231,12 @@ export async function addCustomerShares(req, res) {
 
 
 export async function subtractCustomerShares(req, res) {
-
   const { updates } = req.body;
 
   if (!updates || !Array.isArray(updates) || updates.length === 0) {
-    return res.status(400).json({ message: "Invalid data format: updates array required" });
+    return res
+      .status(400)
+      .json({ message: "Invalid data format: updates array required" });
   }
 
   try {
@@ -232,23 +245,34 @@ export async function subtractCustomerShares(req, res) {
     for (const item of updates) {
       const { customerId, amount } = item;
 
-      if (!customerId || isNaN(amount)) {
-        results.push({ customerId, status: "failed", message: "Invalid customerId or amount" });
+      if (!customerId || typeof amount !== "number" || isNaN(amount)) {
+        results.push({
+          customerId,
+          status: "failed",
+          message: "Invalid customerId or amount",
+        });
         continue;
       }
 
-      const numericAmount = Number(amount);
+      // ✅ FIX: round to 2 decimal places (NUMBER)
+      const roundedAmount =
+        Math.round(Math.abs(amount) * 100) / 100;
 
       const updated = await Customer.updateOne(
         { customerId },
         {
-          $inc: { shares: -Math.abs(numericAmount) }, // subtracting as negative increment
+          // subtract using negative increment
+          $inc: { shares: -roundedAmount },
           $set: { updatedAt: new Date() },
         }
       );
 
       if (updated.matchedCount === 0) {
-        results.push({ customerId, status: "failed", message: "Customer not found" });
+        results.push({
+          customerId,
+          status: "failed",
+          message: "Customer not found",
+        });
       } else {
         results.push({ customerId, status: "success" });
       }
@@ -269,7 +293,9 @@ export async function addCustomerMembershipFee(req, res) {
   const { updates } = req.body;
 
   if (!updates || !Array.isArray(updates) || updates.length === 0) {
-    return res.status(400).json({ message: "Invalid data format: updates array required" });
+    return res
+      .status(400)
+      .json({ message: "Invalid data format: updates array required" });
   }
 
   try {
@@ -278,23 +304,33 @@ export async function addCustomerMembershipFee(req, res) {
     for (const item of updates) {
       const { customerId, amount } = item;
 
-      if (!customerId || isNaN(amount)) {
-        results.push({ customerId, status: "failed", message: "Invalid customerId or amount" });
+      if (!customerId || typeof amount !== "number" || isNaN(amount)) {
+        results.push({
+          customerId,
+          status: "failed",
+          message: "Invalid customerId or amount",
+        });
         continue;
       }
 
-      const numericAmount = Number(amount);
+      // ✅ FIX: round to 2 decimal places (NUMBER)
+      const roundedAmount =
+        Math.round(Math.abs(amount) * 100) / 100;
 
       const updated = await Customer.updateOne(
         { customerId },
         {
-          $inc: { membership: Math.abs(numericAmount) },
+          $inc: { membership: roundedAmount },
           $set: { updatedAt: new Date() },
         }
       );
 
       if (updated.matchedCount === 0) {
-        results.push({ customerId, status: "failed", message: "Customer not found" });
+        results.push({
+          customerId,
+          status: "failed",
+          message: "Customer not found",
+        });
       } else {
         results.push({ customerId, status: "success" });
       }
@@ -310,6 +346,7 @@ export async function addCustomerMembershipFee(req, res) {
   }
 }
 
+
 // controllers/customer.js
 export async function subtractCustomerMembershipFee(req, res) {
   const { updates } = req.body;
@@ -321,31 +358,48 @@ export async function subtractCustomerMembershipFee(req, res) {
   try {
     const results = await Promise.all(
       updates.map(async ({ customerId, amount }) => {
-        if (!customerId || isNaN(amount)) {
-          return { customerId, status: "failed", message: "Invalid data" };
+        if (!customerId || typeof amount !== "number" || isNaN(amount)) {
+          return {
+            customerId,
+            status: "failed",
+            message: "Invalid data",
+          };
         }
 
-        const numericAmount = Number(amount);
+        // ✅ FIX: round to 2 decimal places (NUMBER)
+        const roundedAmount =
+          Math.round(Math.abs(amount) * 100) / 100;
 
         const updated = await Customer.updateOne(
           { customerId },
           {
-            $inc: { membership: -Math.abs(numericAmount) },
+            // subtract using negative increment
+            $inc: { membership: -roundedAmount },
             $set: { updatedAt: new Date() },
           }
         );
 
         if (updated.matchedCount === 0) {
-          return { customerId, status: "failed", message: "Customer not found" };
+          return {
+            customerId,
+            status: "failed",
+            message: "Customer not found",
+          };
         }
 
         return { customerId, status: "success" };
       })
     );
 
-    res.json({ message: "Processed membership fee subtraction", results });
+    res.json({
+      message: "Processed membership fee subtraction",
+      results,
+    });
   } catch (err) {
     console.error("Bulk subtraction failed:", err);
-    res.status(500).json({ message: "Failed to subtract membership", error: err.message });
+    res.status(500).json({
+      message: "Failed to subtract membership",
+      error: err.message || err,
+    });
   }
 }
