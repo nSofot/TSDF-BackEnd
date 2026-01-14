@@ -126,7 +126,6 @@ export async function updateLedgerAccount(req, res) {
 
 
 export async function addLederAccountBalance(req, res) {
-
     const { updates } = req.body;
 
     if (!updates || !Array.isArray(updates)) {
@@ -135,14 +134,18 @@ export async function addLederAccountBalance(req, res) {
 
     try {
         const updatePromises = updates.map(({ accountId, amount }) => {
-            if (typeof amount !== 'number') {
+            if (typeof amount !== "number" || isNaN(amount)) {
                 throw new Error(`Invalid amount for accountId ${accountId}`);
             }
+
+            // ✅ FIX: round to 2 decimal places (NUMBER, not string)
+            const roundedAmount =
+                Math.round(Math.abs(amount) * 100) / 100;
 
             return LedgerAccounts.updateOne(
                 { accountId },
                 {
-                    $inc: { accountBalance: Math.abs(amount) },
+                    $inc: { accountBalance: roundedAmount },
                     $set: { updatedAt: new Date() },
                 }
             );
@@ -161,6 +164,7 @@ export async function addLederAccountBalance(req, res) {
 }
 
 
+
 export async function subtractLedgerAccountBalance(req, res) {
     // if (!isAdmin(req)) {
     //     return res.status(403).json({ message: "Not authorized" });
@@ -174,14 +178,19 @@ export async function subtractLedgerAccountBalance(req, res) {
 
     try {
         const updatePromises = updates.map(({ accountId, amount }) => {
-            if (!accountId || typeof amount !== 'number') {
+            if (!accountId || typeof amount !== "number" || isNaN(amount)) {
                 throw new Error(`Invalid data for accountId: ${accountId}`);
             }
+
+            // ✅ FIX: round to 2 decimal places (NUMBER)
+            const roundedAmount =
+                Math.round(Math.abs(amount) * 100) / 100;
 
             return LedgerAccounts.updateOne(
                 { accountId },
                 {
-                    $inc: { accountBalance: -Math.abs(amount) }, // subtracting as negative increment
+                    // subtract using negative increment
+                    $inc: { accountBalance: -roundedAmount },
                     $set: { updatedAt: new Date() },
                 }
             );
@@ -199,7 +208,6 @@ export async function subtractLedgerAccountBalance(req, res) {
     }
 }
 
- 
 
 export async function deleteLedgerAccount(req, res) {
     const { accountId } = req.params;
