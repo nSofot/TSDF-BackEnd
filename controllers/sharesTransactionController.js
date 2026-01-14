@@ -72,3 +72,19 @@ export async function getSharesTransactionsByMemberId(req, res) {
     });
   }
 }
+
+export async function getAllSharesTransactions(req, res) {
+  try {
+    // if (!isTreasurer(req.user)) {
+    //   return res.status(403).json({ message: "Access denied" });
+    // }
+    const transactions = await SharesTransaction.find();
+    res.json(transactions);
+  } catch (err) {
+    console.error("Error fetching member transactions:", err);
+    res.status(500).json({
+      message: "Failed to fetch member transactions",
+      error: err.message,
+    });
+  }
+}
