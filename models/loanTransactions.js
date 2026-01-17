@@ -4,7 +4,7 @@ const loanTransactionsSchema = new mongoose.Schema({
     trxNumber: {
         type: String,
         required: true,
-        unique: true            
+        unique: true,            
     },
     trxBookNo: {
         type: String,
