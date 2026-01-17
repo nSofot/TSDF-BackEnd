@@ -19,7 +19,7 @@ export async function addLoanTransaction(req, res) {
         let trxNumber = prefix + "000001";
         const lastTransaction = await LoanTransactions
             .findOne({ transactionType })
-            .sort({ createdAt: -1 });
+            .sort({ trxNumber: -1 });
 
         if (lastTransaction) {
             const match = lastTransaction.trxNumber?.match(

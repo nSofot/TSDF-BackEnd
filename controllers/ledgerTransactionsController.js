@@ -30,7 +30,8 @@ export async function getLedgerTransactionById(req, res) {
 }
 
 
-export async function createLedgerTransaction(req, res) {             
+export async function createLedgerTransaction(req, res) {   
+console.log(req.body);              
     try {
         const { trxId, trxBookNo, accountId, trxDate, description, transactionType, isCredit, trxAmount } = req.body;
 
