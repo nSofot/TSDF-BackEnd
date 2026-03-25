@@ -30,10 +30,9 @@ export async function getLedgerTransactionById(req, res) {
 }
 
 
-export async function createLedgerTransaction(req, res) {   
-console.log(req.body);              
+export async function createLedgerTransaction(req, res) {                 
     try {
-        const { trxId, trxBookNo, accountId, trxDate, description, transactionType, isCredit, trxAmount } = req.body;
+        const { trxId, trxBookNo, trxDate, transactionType, transactionCategory, accountId, description, isCredit, trxAmount } = req.body;
 
         if (!trxId || !accountId || !trxDate || !description || isCredit == null || trxAmount == null) {
             return res.status(400).json({ message: "Missing required fields" });
@@ -50,12 +49,12 @@ console.log(req.body);
             accountId,
             trxDate: trxDateObj,
             transactionType,
+            transactionCategory,
             description,
             isCredit,
             trxAmount: Number(trxAmount),
             createdBy: req.user?.id || "system",
         });
-
 
         await accountTransaction.save();
 
